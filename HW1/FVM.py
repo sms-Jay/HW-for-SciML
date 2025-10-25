@@ -29,10 +29,21 @@ def FVM(h,T,dt,D):
                 c[t][i][j] = c[t-1][i][j] + mu1*(c[t-1][i-1][j]+c[t-1][i+1][j]+c[t-1][i][j+1]+c[t-1][i][jm]-4*c[t-1][i][j]) 
                 + mu2*(c[t-1][i-1][j]-c[t-1][i][j])
             c[t][i][N] = c[t][i][0]
-        for j in range(N+1):
-            c[t][N][j] = c[t][N-1][j]
+        for j in range(N):
+            jm = (j-1+N)%N
+            c[t][N][j] = c[t-1][N][j] + mu1*(c[t-1][N-1][j]+c[t-1][N][j+1]+c[t-1][N][jm]-3*c[t-1][N][j]) 
+            + mu2*(c[t-1][N-1][j]-c[t-1][N][j])
+        c[t][N][N] = c[t][N][0]
     return c
 
+def mat_vec(h,ct):
+    N = int (1/h)
+    Ct = np.zeros((N+1)*(N+1))
+    for i in range(N+1):
+        for j in range(N+1):
+            idx = i*(N+1)+j
+            Ct[idx] = ct[i][j]
+    return Ct
 # 将c的结果可视化，需要可视化的时间为t = 0.2,0.5,1.0,1.5
 def visualize(c,h,dt):
     N = int(1.0/h)
@@ -53,7 +64,16 @@ def visualize(c,h,dt):
 if __name__ == "__main__":
     h = 0.005
     T = 1.5
-    dt = 0.01
+    dt = 0.0005
     D = 0.01
     c = FVM(h,T,dt,D)
     visualize(c,h,dt)
+    
+    Nsnap = 150
+    N = int(1/h)
+    unit = int((T/Nsnap)/dt)
+    csnap = np.zeros((Nsnap+1,(N+1)*(N+1)))
+    for t in range(Nsnap+1):
+        t_idx = t*unit
+        csnap[t] = mat_vec(h,c[t_idx])
+    np.savetxt('csnap.txt', csnap)
