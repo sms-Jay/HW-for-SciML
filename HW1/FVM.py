@@ -69,7 +69,7 @@ if __name__ == "__main__":
     c = FVM(h,T,dt,D)
     visualize(c,h,dt)
     
-    Nsnap = 150
+    Nsnap = 100
     N = int(1/h)
     unit = int((T/Nsnap)/dt)
     csnap = np.zeros((Nsnap+1,(N+1)*(N+1)))
