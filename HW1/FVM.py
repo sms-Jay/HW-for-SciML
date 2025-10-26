@@ -7,34 +7,46 @@ import matplotlib.pyplot as plt
 # problem 1:use finite volume method to solve the 2D Convection-Diffusion Equation
 # Default: dx = dy = h
 
-def FVM(h,T,dt,D):
+def FVM(h, T, dt, D):
     N = int(1/h) 
     M = int(T/dt)
-    mu1 = D*dt*N*N
-    mu2 = dt*N
-    c = np.zeros((M+1,N+1,N+1))
-    #[0,M]*[0,N]*[0,N]
-    for t in range(1,M+1):
-        # i = 0
-        for j in range(N+1):
-            y = j*h
-            if y > 1/3 and y < 2/3:
-                c[t][0][j] = 1
+    mu_diff = D * dt / (h*h)
+    mu_conv = dt / h
+    
+    c = np.zeros((M+1, N+2, N+2))  # 增加虚拟边界
+    
+    for t in range(1, M+1):
+        # 先复制，然后计算内部点
+        c[t] = c[t-1].copy()
+        
+        # 内部点计算 (i=1到N, j=1到N)
+        for i in range(1, N+1):
+            for j in range(1, N+1):
+                # 扩散项
+                diff = (c[t-1,i-1,j] + c[t-1,i+1,j] + 
+                       c[t-1,i,j-1] + c[t-1,i,j+1] - 4*c[t-1,i,j])
+                # 对流项
+                conv = c[t-1,i-1,j] - c[t-1,i,j]  # u=1>0, 迎风
+                
+                c[t,i,j] = c[t-1,i,j] + mu_diff * diff + mu_conv * conv
+        
+        # 边界条件（计算完成后施加）
+        # 左边界：入流
+        for j in range(1, N+1):
+            y = (j-0.5)*h  # 单元中心坐标
+            if 1/3 < y < 2/3:
+                c[t,0,j] = 1.0
             else:
-                c[t][0][j] = 0
-        # 1 <= i <= N-1
-        for i in range(1,N):
-            for j in range(N):
-                jm = (j-1+N)%N
-                c[t][i][j] = c[t-1][i][j] + mu1*(c[t-1][i-1][j]+c[t-1][i+1][j]+c[t-1][i][j+1]+c[t-1][i][jm]-4*c[t-1][i][j]) 
-                + mu2*(c[t-1][i-1][j]-c[t-1][i][j])
-            c[t][i][N] = c[t][i][0]
-        for j in range(N):
-            jm = (j-1+N)%N
-            c[t][N][j] = c[t-1][N][j] + mu1*(c[t-1][N-1][j]+c[t-1][N][j+1]+c[t-1][N][jm]-3*c[t-1][N][j]) 
-            + mu2*(c[t-1][N-1][j]-c[t-1][N][j])
-        c[t][N][N] = c[t][N][0]
-    return c
+                c[t,0,j] = 0.0
+        
+        # 右边界：出流 (∂c/∂x=0)
+        c[t,N+1,:] = c[t,N,:]
+        
+        # 周期性边界
+        c[t,:,0] = c[t,:,N]    # 下虚拟 = 上物理
+        c[t,:,N+1] = c[t,:,1]  # 上虚拟 = 下物理
+    
+    return c[:, 0:N+1, 0:N+1]  # 返回物理区域
 
 def mat_vec(h,ct):
     N = int (1/h)
@@ -45,8 +57,7 @@ def mat_vec(h,ct):
             Ct[idx] = ct[i][j]
     return Ct
 # 将c的结果可视化，需要可视化的时间为t = 0.2,0.5,1.0,1.5
-def visualize(c,h,dt):
-    N = int(1.0/h)
+def visualize(c,dt):
     times = [0.2, 0.5, 1.0, 1.5]
     for time_point in times:
         t_index = int(time_point/dt)
@@ -67,7 +78,7 @@ if __name__ == "__main__":
     dt = 0.0005
     D = 0.01
     c = FVM(h,T,dt,D)
-    visualize(c,h,dt)
+    visualize(c,dt)
     
     Nsnap = 100
     N = int(1/h)
@@ -77,3 +88,12 @@ if __name__ == "__main__":
         t_idx = t*unit
         csnap[t] = mat_vec(h,c[t_idx])
     np.savetxt('csnap.txt', csnap)
+    
+    n = 100
+    N = int(1/h)
+    data = np.zeros((n+1,(N+1)*(N+1)))
+    for t in range(n+1):
+        data[t] = mat_vec(h,c[t])
+    np.savetxt('data.txt', data)
+    
+    

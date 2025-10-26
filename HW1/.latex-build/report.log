@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.23)  25 OCT 2025 23:38
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.23)  26 OCT 2025 23:11
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -624,6 +624,18 @@ File: FVM t=1.0 dt=0.0005.png Graphic file (type bmp)
 <FVM t=1.0 dt=0.0005.png>
 File: FVM t=1.5 dt=0.0005.png Graphic file (type bmp)
 <FVM t=1.5 dt=0.0005.png>
+File: FVM t=0.2 dt=0.01.png Graphic file (type bmp)
+<FVM t=0.2 dt=0.01.png>
+File: FVM t=0.5 dt=0.01.png Graphic file (type bmp)
+<FVM t=0.5 dt=0.01.png>
+File: FVM t=1.0 dt=0.01.png Graphic file (type bmp)
+<FVM t=1.0 dt=0.01.png>
+File: FVM t=1.5 dt=0.01.png Graphic file (type bmp)
+<FVM t=1.5 dt=0.01.png>
+
+
+LaTeX Warning: Float too large for page by 34.57196pt on input line 103.
+
 
 
 [2]
@@ -635,10 +647,10 @@ L3 programming layer <2022/07/14>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 17300 strings out of 473832
- 361168 string characters out of 5729486
+ 17344 strings out of 473832
+ 362284 string characters out of 5729486
  784521 words of memory out of 5000000
- 40117 multiletter control sequences out of 15000+600000
+ 40157 multiletter control sequences out of 15000+600000
  567352 words of font info for 103 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  93i,9n,111p,439b,581s stack positions out of 10000i,1000n,20000p,200000b,200000s
