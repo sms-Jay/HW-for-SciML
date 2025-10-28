@@ -48,17 +48,9 @@ def FVM(h, T, dt, D):
     
     return c[:, 0:N+1, 0:N+1]  # 返回物理区域
 
-def mat_vec(h,ct):
-    N = int (1/h)
-    Ct = np.zeros((N+1)*(N+1))
-    for i in range(N+1):
-        for j in range(N+1):
-            idx = i*(N+1)+j
-            Ct[idx] = ct[i][j]
-    return Ct
 # 将c的结果可视化，需要可视化的时间为t = 0.2,0.5,1.0,1.5
 def visualize(c,dt):
-    times = [0.2, 0.5, 1.0, 1.5]
+    times = [0.2,0.5,1.0,1.5]
     for time_point in times:
         t_index = int(time_point/dt)
         plt.figure()
@@ -86,14 +78,17 @@ if __name__ == "__main__":
     csnap = np.zeros((Nsnap+1,(N+1)*(N+1)))
     for t in range(Nsnap+1):
         t_idx = t*unit
-        csnap[t] = mat_vec(h,c[t_idx])
+        csnap[t] = c[t_idx].reshape(-1)
     np.savetxt('csnap.txt', csnap)
     
-    n = 100
+    t_end = 1.5
+    n = 3000
     N = int(1/h)
+    unit = int((t_end/n)/dt)
     data = np.zeros((n+1,(N+1)*(N+1)))
     for t in range(n+1):
-        data[t] = mat_vec(h,c[t])
+        t_idx = t*unit
+        data[t] = c[t_idx].reshape(-1)
     np.savetxt('data.txt', data)
     
     

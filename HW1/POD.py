@@ -28,15 +28,17 @@ def F(h,D):
     mu = D/(h*h)
     f = np.zeros((N+1)*(N+1))
     for j in range(N+1):
-        y = j*h
+        y = (j-0.5)*h
         tep = 0
         if y > 1/3 and y < 2/3:
-            tep = 1
+            tep = 1.0
         else:
-            tep = 0
+            tep = 0.0
         c = (N+1)+j
         f[c] = (mu+1/h)*tep
     return f
+
+
 def A_x(x, h, D):
     """矩阵乘向量 - 使用虚拟边界方法"""
     N = int(1/h)
@@ -51,8 +53,7 @@ def A_x(x, h, D):
     
     # 应用边界条件到虚拟边界
     # 左虚拟边界已经包含在物理区域中，这里处理右虚拟边界和周期性边界
-    
-    # 右虚拟边界: 出流条件 (∂c/∂x=0, i=N+1)
+     # 右虚拟边界: 出流条件 (∂c/∂x=0, i=N+1)
     x_ext[N+1, :] = x_ext[N, :]
     
     # 上下虚拟边界: 周期性条件
@@ -61,43 +62,54 @@ def A_x(x, h, D):
     # 上虚拟边界 j=N+1 对应 j=1
     x_ext[:, N] = x_ext[:, 0]    
     x_ext[:, N+1] = x_ext[:, 1]    # 上虚拟 = 下物理
-    # 下虚拟边界在索引-1，我们通过模运算处理
     
     # 计算A_x
     mu = D/(h*h)
     Ax_ext = np.zeros((N+2, N+2))
     
     # 计算物理区域 (i=0到N, j=0到N)
+
+        
     for i in range(0, N+1):
         for j in range(0, N+1):
+            if i != 1:
             # 处理周期性边界的邻居索引
-            j_prev = (j-1) % (N+1)  # 下邻居
-            j_next = (j+1) % (N+1)  # 上邻居
+                j_prev = (j-1) % (N+1)  # 下邻居
+                j_next = (j+1) % (N+1)  # 上邻居
             
-            i_prev = i-1 if i > 0 else -1  # 左邻居
-            i_next = i+1 if i < N else N+1  # 右邻居
+                i_prev = i-1 if i > 0 else -1  # 左邻居
+                i_next = i+1 if i < N else N+1  # 右邻居
             
             # 获取邻居值
-            left_val = x_ext[i_prev, j] if i > 0 else (1.0 if (1/3 < j*h < 2/3) else 0.0)
-            right_val = x_ext[i_next, j]
-            up_val = x_ext[i, j_next]
-            down_val = x_ext[i, j_prev]
+                left_val = x_ext[i_prev, j] if i > 0 else (1.0 if (1/3 < j*h < 2/3) else 0.0)
+                right_val = x_ext[i_next, j]
+                up_val = x_ext[i, j_next]
+                down_val = x_ext[i, j_prev]
             
             # 扩散项
-            diffusion = mu * (left_val + right_val + up_val + down_val - 4*x_ext[i, j])
+                diffusion = mu * (left_val + right_val + up_val + down_val - 4*x_ext[i, j])
             # 对流项 (u=1>0, 迎风)
-            convection = (1/h) * (left_val - x_ext[i, j])
+                convection = (1/h) * (left_val - x_ext[i, j])
+            else:
+                j_prev = (j-1) % (N+1)  # 下邻居
+                j_next = (j+1) % (N+1)  # 上邻居
+                i_next = i+1
+                right_val = x_ext[i_next, j]
+                up_val = x_ext[i, j_next]
+                down_val = x_ext[i, j_prev]
+                diffusion = mu * (right_val + up_val + down_val - 4*x_ext[i, j])
+            # 对流项 (u=1>0, 迎风)
+                convection = (1/h) * ( - x_ext[i, j])
             
             Ax_ext[i, j] = diffusion + convection
     
+    
+
     # 提取物理区域并转换回向量
     Ax_mat = Ax_ext[0:N+1, 0:N+1]  # 提取物理区域
     Ax_vec = Ax_mat.reshape(-1)     # 展平为一维向量
     
     return Ax_vec
-
-
-
 
 def solve(h,T,Nsnap,k,dt,D):
     N = int (1/h)
@@ -107,7 +119,7 @@ def solve(h,T,Nsnap,k,dt,D):
     c = np.zeros((M+1,(N+1)*(N+1)))
     f = F(h,D)
     for j in range(N+1):
-        y = j*h
+        y = (j-0.5)*h
         if y > 1/3 and y < 2/3:
             c[0][j] = 1.0
         else :
@@ -122,10 +134,7 @@ def solve(h,T,Nsnap,k,dt,D):
         c[m+1] = V @ q[m+1]
     C = np.zeros((M+1,N+1,N+1))
     for m in range(M+1):
-        for i in range(N+1):
-            for j in range(N+1):
-                idx = i*(N+1)+j
-                C[m][i][j] = c[m][idx]
+        C[m] = c[m].reshape(N+1,N+1)
     return C
 
 def visualize(c,dt,k):
@@ -148,10 +157,9 @@ if __name__ == "__main__":
     dt = 0.0005
     D = 0.01
     Nsnap = 100
-    k = 10
+    k = 1
     c = solve(h,T,Nsnap,k,dt,D)
     visualize(c,dt,k)
-    
     
         
             
