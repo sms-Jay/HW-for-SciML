@@ -1,0 +1,126 @@
+\documentclass[11pt,a4 paper,one side]{article}
+\usepackage{amsmath,amssymb,graphicx,subcaption}
+\usepackage{ctex}  
+\usepackage[colorlinks=true,linkcolor=red,citecolor=red,filecolor=magenta,urlcolor=cyan]{hyperref}
+\usepackage{bookmark}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\title{科学机器学习+HW2报告}
+\author{2100012131 蒋鹏}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+\section{问题描述}
+考虑一维高斯过程$f(x) ~\sim GP(m(x),\kappa(x,x'))$,其中期望函数$m(x)=0$,核函数为\begin{equation}
+    \kappa(x,x')=\sigma_f^2\exp(-\frac{(x-x')^2}{2l^2})+\sigma^2\delta_{x,x'}
+\end{equation}
+随机地在$(-8,8)$采样20个$x_i$，即$x_i\sim U(-8,8)$。用$(l,\sigma_f,\sigma)=(1.0,1.0,0.1)$对应的高斯过程采样相应的点$f(x_i)$。把$(x_i,f(x_i))$作为数据保存下来。
+注意我们的代码指定了随机种子便于分析，将对应代码注释掉可以得到任意随机数。
+\section{问题1}
+使用$(l,\sigma_f,\sigma)=(1.0,1.0,0.1),(l,\sigma_f,\sigma)=(0.3,1.08,5e-5),(l,\sigma_f,\sigma)=(3.0,1.16,0.89)$的高斯过程进行回归，画出$(-8,8)$上的期望和不确定性。
+\subsection{预期结果}
+第一组参数为真实参数，拟合效果应该最好；第二组参数长度尺度很小，噪声极小，会导致回归曲线剧烈震荡，产生过拟合；第三组参数长度尺度很大，噪声较大，回归曲线平滑，
+不确定性很大，欠拟合。
+\subsection{数值方法}
+用Cholesky分解求解某些量，然后根据理论结果进行均值与方差的预测。
+\subsection{数值结果与分析}
+我们展示拟合结果分别如图\ref{高斯过程回归 - 参数集1}、\ref{高斯过程回归 - 参数集2}、\ref{高斯过程回归 - 参数集3}所示，可以看到与预期结果相一致。
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{高斯过程回归 - 参数集1.png}
+    \caption{高斯过程回归 - 参数集1}
+    \label{高斯过程回归 - 参数集1}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{高斯过程回归 - 参数集2.png}
+    \caption{高斯过程回归 - 参数集2}
+    \label{高斯过程回归 - 参数集2}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{高斯过程回归 - 参数集3.png}
+    \caption{高斯过程回归 - 参数集3}
+    \label{高斯过程回归 - 参数集3}
+\end{figure}
+\section{问题2}
+假设我们已知核函数的形式为平方指数核，使用数据，采用贝叶斯模型选择方法，计算超参数的对数概率$\log \rho(\theta=(l,\sigma_f,\sigma)|y,X)$，优化求解出最好的超参。
+画出对数概率的等高线图检验结果是否合理。用求出来的超参对应的高斯过程对数据进行回归，画出$(-8,8)$上的期望和不确定性。
+\subsection{数值方法}
+根据理论结果，该对数概率具有表达式，用L-BFGS-B结合多起点优化进行求解超参数，选择不同优化起点个数为100。
+\subsection{数值结果与分析}
+平方指数核最优超参数：$(l,\sigma_f,\sigma)=(1.2575,0.9936,0.1282)$。
+首先展示对数概率分别在固定一个参数下的等高线图，如图\ref{平方指数核对数边际似然等高线图}所示。
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{平方指数核对数边际似然等高线图 (固定l=1.2575).png}
+        \caption{平方指数核对数边际似然等高线图 (固定l)}
+        \label{平方指数核对数边际似然等高线图 (固定l)}
+    \end{subfigure}
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{平方指数核对数边际似然等高线图 (固定σ_f=0.9936).png}
+        \caption{平方指数核对数边际似然等高线图 (固定$\sigma_f$)}
+        \label{平方指数核对数边际似然等高线图 (固定σ_f)}
+    \end{subfigure}
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{平方指数核对数边际似然等高线图 (固定σ_n=0.1282).png}
+        \caption{平方指数核对数边际似然等高线图 (固定$\sigma_n$)}
+        \label{平方指数核对数边际似然等高线图 (固定σ_n)}
+    \end{subfigure}
+    
+    \caption{平方指数核对数边际似然等高线图}
+    \label{平方指数核对数边际似然等高线图}
+\end{figure}
+\par 从图中可以看出：所得超参数为全局最优，并未陷入局部极大。
+\par 最后展示在最优超参下的高斯回归，如图\ref{贝叶斯模型选择平方指数核}所示。可以看到回归效果与真实参数\ref{高斯过程回归 - 参数集1}相接近，可以认为超参预测效果好。
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{贝叶斯模型选择 - 平方指数核.png}
+    \caption{贝叶斯模型选择平方指数核}
+    \label{贝叶斯模型选择平方指数核}
+\end{figure}
+\section{问题3}
+考虑Matern类核函数\begin{equation}
+    \kappa(x,x')=\sigma_f^2(1+\frac{\sqrt{3}}{l}|x-x'|)\exp(-\frac{\sqrt{3}}{l})+\sigma^2\delta_{x,x'}
+\end{equation}假设我们已知核函数的形式为Matern核，使用数据，采用贝叶斯模型选择方法，计算超参数的对数概率$\log \rho(\theta=(l,\sigma_f,\sigma)|y,X)$，优化求解出最好的超参。
+画出对数概率的等高线图检验结果是否合理。用求出来的超参对应的高斯过程对数据进行回归，画出$(-8,8)$上的期望和不确定性。
+\subsection{数值方法}
+根据理论结果，该对数概率具有表达式，用L-BFGS-B结合多起点优化进行求解超参数，选择不同优化起点个数为100。
+\subsection{数值结果与分析}
+平方指数核最优超参数：$(l,\sigma_f,\sigma)=(1.7236,0.9834,0.0951)$。
+首先展示对数概率分别在固定一个参数下的等高线图，如图\ref{Matern核对数边际似然等高线图}所示。
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{Matern核对数边际似然等高线图 (固定l=1.7236).png}
+        \caption{Matern核对数边际似然等高线图 (固定l)}
+        \label{Matern核对数边际似然等高线图 (固定l)}
+    \end{subfigure}
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{Matern核对数边际似然等高线图 (固定σ_f=0.9834).png}
+        \caption{Matern核对数边际似然等高线图 (固定$\sigma_f$)}
+        \label{Matern核对数边际似然等高线图 (固定σ_f)}
+    \end{subfigure}
+    \begin{subfigure}{0.30\textwidth}
+        \includegraphics[width=\textwidth]{Matern核对数边际似然等高线图 (固定σ_n=0.0951).png}
+        \caption{Matern核对数边际似然等高线图 (固定$\sigma_n$)}
+        \label{Matern核对数边际似然等高线图 (固定σ_n)}
+    \end{subfigure}
+    
+    \caption{Matern核对数边际似然等高线图}
+    \label{Matern核对数边际似然等高线图}
+\end{figure}
+\par 从图中可以看出：所得超参数为全局最优，并未陷入局部极大。
+\par 最后展示在最优超参下的高斯回归，如图\ref{贝叶斯模型选择Matern核}所示。可以看到回归效果与真实参数\ref{高斯过程回归 - 参数集1}相接近，可以认为超参预测效果好。
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{贝叶斯模型选择 - Matern核.png}
+    \caption{贝叶斯模型选择Matern核}
+    \label{贝叶斯模型选择Matern核}
+\end{figure}
+\end{document}
